@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html    
+    xmlns="http://www.w3.org/1999/xhtml"
+    ng-app="CalcApp">
+<head>
+    <title>Web Calculator</title>
+    <script src="angular.js"></script>
+    <!--<script src="ComputationModule.js"></script>-->
+    <script src="ConvertSvc.js"></script>
+</head>
+<body ng-controller="CalcCtrl as ctrl">
+    
+    <div ng-repeat="row in rows">
+        <input
+            style="width:400px;"
+            ng-model="row.expression"
+            ng-change="eventHandlers.rowChanged(row);" />
+        <!--<textarea
+            ng-model="row.asmjsCode"></textarea>-->
+         = 
+        <span>
+            {{ row.result }}
+        </span>
+    </div>
+
+    <input
+        type="button"
+        value="Add New Row"
+        ng-click="eventHandlers.addRow();" />
+
+
+
+</body>
+    <script>
+        "use strict";        
+        angular.module("CalcApp", [])
+            .service("ConvertSvc", ConvertSvc)
+            .controller("CalcCtrl", ["$scope", "$http", "ConvertSvc", function CalcCtrl($scope, $http, ConvertSvc) {
+                var eventHandlers,
+                    computationCodeWithoutInput;
+
+                // Fetch the ComputationModule.js file which contains the asm.js code to perform various operations.
+                // The code generated from the user input will be added to this file, and then it is compiled with eval.
+                $http.get("ComputationModule.js")
+                .then(function (response) {
+                    computationCodeWithoutInput = response.data;
+                });                
+
+                // Set up handlers for when buttons are clicked.
+                $scope.eventHandlers = (function () {
+                    function rowChanged(row) {                        
+                        var expression, asmjsCode, computationCode, computationModule, result,
+                            bufferSize = 65536 * 2,
+                            heap = new ArrayBuffer(bufferSize),
+                            foreign = {};
+                        expression = row.expression;
+                        asmjsCode = ConvertSvc.convert(row.expression);
+                        
+
+                        computationCode = computationCodeWithoutInput
+                            .replace(new RegExp('"DO_COMPUTATION"'),
+                            "function doComputation() {\n" + asmjsCode + "}\n");
+                        // Used by eval code below
+                        foreign = {};
+                        computationModule = eval('(' + computationCode + '())');
+
+                        computationModule.doComputation();
+                        result = "{0} + {1} * i"
+                            .replace(/\{0\}/, computationModule.get_outR().toString())
+                            .replace(/\{1\}/, computationModule.get_outI().toString());
+
+                        row.asmjsCode = asmjsCode;
+                        row.result = result;
+                    }
+
+                    function addRow() {
+                        $scope.rows.push({
+                            expression: ""
+                        });
+                    }
+
+                    return {
+                        rowChanged: rowChanged,
+                        addRow: addRow
+                    };
+                }());
+
+                $scope.rows = [];
+                $scope.eventHandlers.addRow();
+            }]);
+    </script>
+</html>
