@@ -24,6 +24,7 @@ var ConvertSvc = [function () {
     // 1 + cos(0) -> ["+", 1, ["cos", "0"]]    
     // This function operates recursively.    
     function parseTextToMathArray(text) {
+        debugger;
         function recurse(text) {
             var i, index, operand0, operand1;
 
@@ -40,7 +41,7 @@ var ConvertSvc = [function () {
                     // The second part of the expression checks that we're not looking for subtraction and
                     // finding a unary '-' instead.
                     if (c === toFind && numParens === 0 &&
-                        !(toFind === '-' && (j === 0 || OPERATORS.indexOf(text[j - 1] > -1)))) {
+                        !(toFind === '-' && (j === 0 || OPERATORS.indexOf(text[j - 1]) > -1))) {
                         return j;
                     }
                     if (c.substr(0, 1) === '(') {
