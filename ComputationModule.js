@@ -1,4 +1,5 @@
-﻿// This code is not read with a script tag.  Instead, it is imported with an AJAX call and then the string
+﻿// ComputationModule.js
+// This code is not read with a script tag.  Instead, it is imported with an AJAX call and then the string
 // DO_COMPUTATION is replaced with the code for a doComputation function.  eval() is then used to compute
 // the programming that actually runs.  This is because asm.js does not allow for its programming to be
 // modified at run-time.
@@ -37,7 +38,7 @@ function getComputationModule() {
             return 0.0;
         }
 
-        // Compute the result of [r,i] raised to the power with the given real and imaginary parts..        
+        // Compute the result of [r,i] raised to the power with the given real and imaginary parts..
         // Places the resulting real part in outR and the imaginary part in outI.
         function computePower(r, i, expr, expi) {
             // Tell asm.js that r, i, expr, and expi are floating-point numbers.
@@ -170,7 +171,7 @@ function getComputationModule() {
             }
         }
 
-        // Compute the "Argument" of a complex number, that is the angle of the number in polar coordinates.
+        // Compute the "Argument" of a complex number; the angle of the number in polar coordinates.
         function compute_arg(r, i) {
             r = +r;
             i = +i;

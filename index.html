@@ -4,66 +4,37 @@
     ng-app="CalcApp">
 <head>
     <title>Web Calculator</title>
-    <script src="angular.js"></script>
-    <!--<script src="ComputationModule.js"></script>-->
+    <script src="angular.js"></script>    
     <script src="ConvertSvc.js"></script>
-</head>
-<body ng-controller="CalcCtrl as ctrl">
-    
-    <div ng-repeat="row in rows">
-        <input
-            style="width:400px;"
-            ng-model="row.expression"
-            ng-change="eventHandlers.rowChanged(row);" />
-        <!--<textarea
-            ng-model="row.asmjsCode"></textarea>-->
-         = 
-        <span>
-            {{ row.result }}
-        </span>
-    </div>
-
-    <input
-        type="button"
-        value="Add New Row"
-        ng-click="eventHandlers.addRow();" />
-
-
-
-</body>
     <script>
-        "use strict";        
+        "use strict";
         angular.module("CalcApp", [])
             .service("ConvertSvc", ConvertSvc)
-            .controller("CalcCtrl", ["$scope", "$http", "ConvertSvc", function CalcCtrl($scope, $http, ConvertSvc) {
-                var eventHandlers,
-                    computationCodeWithoutInput;
+            .controller("CalcCtrl", ["$scope", "$http", "ConvertSvc",
+                function CalcCtrl($scope, $http, ConvertSvc) {
+                var computationCodeWithoutInput;
 
-                // Fetch the ComputationModule.js file which contains the asm.js code to perform various operations.
-                // The code generated from the user input will be added to this file, and then it is compiled with eval.
+                // Fetch the ComputationModule.js file which contains the asm.js code to perform
+                // various operations. The code generated from the user input will be added to this
+                //file, and then it is compiled with eval.
                 $http.get("ComputationModule.js")
                 .then(function (response) {
                     computationCodeWithoutInput = response.data;
-                });                
+                });
 
                 // Set up handlers for when buttons are clicked.
                 $scope.eventHandlers = (function () {
-                    function rowChanged(row) {                        
+                    function rowChanged(row) {
                         var expression, asmjsCode, computationCode, computationModule, result,
-                            bufferSize = 65536 * 2,
-                            heap = new ArrayBuffer(bufferSize),
+                            // head and foreign are used in eval() code below.
+                            heap = new ArrayBuffer(131072),
                             foreign = {};
                         expression = row.expression;
                         asmjsCode = ConvertSvc.convert(row.expression);
-                        
-
                         computationCode = computationCodeWithoutInput
                             .replace(new RegExp('"DO_COMPUTATION"'),
-                            "function doComputation() {\n" + asmjsCode + "}\n");
-                        // Used by eval code below
-                        foreign = {};
+                            "function doComputation() {\n" + asmjsCode + "}\n");                        
                         computationModule = eval('(' + computationCode + '())');
-
                         computationModule.doComputation();
                         result = "{0} + {1} * i"
                             .replace(/\{0\}/, computationModule.get_outR().toString())
@@ -83,10 +54,29 @@
                         rowChanged: rowChanged,
                         addRow: addRow
                     };
-                }());
+                }()); // end eventHandlers
 
                 $scope.rows = [];
                 $scope.eventHandlers.addRow();
             }]);
     </script>
+</head>
+<body ng-controller="CalcCtrl as ctrl">
+    
+    <div ng-repeat="row in rows">
+        <input
+            style="width:400px;"
+            ng-model="row.expression"
+            ng-change="eventHandlers.rowChanged(row);" />
+        <!--<textarea ng-model="row.asmjsCode"></textarea>-->
+         = 
+        <span>
+            {{ row.result }}
+        </span>
+    </div>
+    <input
+        type="button"
+        value="Add New Row"
+        ng-click="eventHandlers.addRow();" />
+</body>    
 </html>
